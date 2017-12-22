@@ -54,23 +54,23 @@ public:
     //                                  Mat& distCoeffs1, Mat& distCoeffs2, Mat& F, Mat& P_out, Mat& H_stereo,
     //                                  vector<vector<Point2f> > imagePoints1, vector<vector<Point2f> > imagePoints2);
 
+    void calibTransform(string output_file, string labelX2Y, const Mat& in_vec);
+
+    void calibTransform(string outpur_dir, const Mat& in, string labelX2Y);
+
+    void calcBoardCornerPositions(vector<Point3f>& corners);
+
     bool runExtrinsic(Mat cameraMatrix, Mat distCoeffs, vector<Point2f> imagePoints);
 
     void printMatrix(Mat M, bool printType = true);
 
-    void saveCalibPoints(string str, const vector<vector<cv::Point2f> > &imagePoints);
-
-    void calcBoardCornerPositions(vector<Point3f>& corners);
+    void saveCalibPoints(string str, const vector<vector<cv::Point2f> > &imagePoints);    
 
     void saveTransformations(string output_file, string labelX2Y,
                              const vector<Mat>& in_rvecs, const vector<Mat>& in_tvecs);
 
     void saveTransformations(string output_file, string labelX2Y,
                              const vector<Mat>& in_vec);
-
-    void calibTransform(string output_file, string labelX2Y, const Mat& in_vec);
-
-    void calibTransform(string outpur_dir, const Mat& in, string labelX2Y);
 
     void saveHandEyeTransform(string output_file, const Mat& left, std::string hName);
 

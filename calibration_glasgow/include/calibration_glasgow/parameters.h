@@ -2,6 +2,11 @@
 #ifndef PARAMETERS_H_
 #define PARAMETERS_H_
 
+#include <string>
+#include <iostream>
+#include <sstream>
+#include <calibration_glasgow/kinect2_definitions.h>
+
 static const char WINDOW_LEFT[] = "RGB camera image";
 
 // Parameter server
@@ -21,10 +26,15 @@ static const char HE_CALIB_FILE_URL[] = "/glasgow_calibration/gHc_calibration_fi
 static const char DEBUGQ[] = "/glasgow_calibration/debug";
 
 // Messages
+/*
 static const char CAM_SUB[] = "/Image_for_Calibration";
 static const char CAMERA_INFO[] = "Cam_info_for_Calibration";
 static const char TRANFORM_SUB[] = "/transform_GrippertoBase";
-
+*/
+const std::string CAM_SUB1 = K2_DEFAULT_NS K2_TOPIC_HD K2_TOPIC_IMAGE_COLOR;
+const std::string CAM_SUB = "/" + CAM_SUB1;
+const std::string CAMERA_INFO = CAM_SUB.substr(0, CAM_SUB.rfind('/')) + "/camera_info"; ;
+static const char TRANFORM_SUB[] = "/transform_GrippertoBase";
 
 
 //Services

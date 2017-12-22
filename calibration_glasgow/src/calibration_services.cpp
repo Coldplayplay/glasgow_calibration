@@ -50,6 +50,7 @@ public:
     int noImgPtu;
     vector<Mat> bigMatQ, bigMatE;
 
+//====================================三个订阅器和同步器的初始化：1.图片，2.相机参数，3.机械臂手爪到底座的变换矩阵
     CmainCalibration() : it_(nh_),
         im_sub_(it_, CAM_SUB, 5),
         cam_info_sub_(nh_, CAMERA_INFO, 5),
@@ -61,7 +62,8 @@ public:
         double param;
 
         ros::Duration(10.0).sleep();
-        ROS_INFO("Initialising calibration node!!");
+        ROS_INFO_STREAM("====================================================");
+        ROS_INFO_STREAM("Initialising calibration node!!");
 
         if(nh_.hasParam(CALIB_TARGET))
         {
@@ -104,14 +106,15 @@ public:
         }
 
         c_.nrFrames = 1;
-        
+/*
         string cmd = "exec rm -r " + c_.calibOutputDir + "*.xml";
         system(cmd.c_str());
         cmd = "exec rm -r " + c_.imageOutputDir + "*.tif";
         system(cmd.c_str());
         cmd = "exec rm -r " + c_.calibOutputDir + "*.py";
         system(cmd.c_str());
-        cmd = "exec mkdir -p " + c_.imageOutputDir;
+*/
+        string cmd = "exec mkdir -p " + c_.imageOutputDir;
         system(cmd.c_str());
         // ***********************
 
@@ -127,15 +130,17 @@ public:
         cv::resizeWindow(WINDOW_LEFT, 640, 480);
         cvMoveWindow(WINDOW_LEFT, 10, 10);
 
-        // Service calls
+        // Service calls     提供服务？
         he_calib_srv_ = nh_.advertiseService(HE_CALIB, &CmainCalibration::HandEyeCalibrationSrv, this);
 
         //capture_images();
         cv::startWindowThread();
-
-        ROS_INFO("Node initialised...");
+        ROS_INFO_STREAM("================================================");
+        ROS_INFO_STREAM("Node initialised...");
 
         sync.registerCallback(boost::bind(&CmainCalibration::mainRoutine, this, _1, _2, _3));
+        ROS_INFO_STREAM("================================================");
+        ROS_INFO_STREAM("waiting for image cam and robot messages...");
     }
 
     ~CmainCalibration()
@@ -146,7 +151,8 @@ public:
     // Callback that stores images in memory
     void mainRoutine(const sensor_msgs::ImageConstPtr& imIn, const sensor_msgs::CameraInfoConstPtr& cam_info, const geometry_msgs::TransformStampedConstPtr& msg_trans)
     {
-        ROS_INFO("Reading messages!");
+        ROS_INFO_STREAM("================================================");
+        ROS_INFO_STREAM("Reading messages...");
         // Get images
         try
         {
@@ -181,6 +187,8 @@ public:
 
     bool HandEyeCalibrationSrv(calibration_glasgow::HandEyeCalibration::Request& req, calibration_glasgow::HandEyeCalibration::Response& rsp)
     {
+        ROS_INFO_STREAM("=======================================================");
+        ROS_INFO_STREAM("The hand-eye calibration service has been started...");
         int totalFrames = 8;
         if(req.doIt == true)
         {
@@ -193,6 +201,7 @@ public:
                 if(c_.calibTarget == c_.opencvStr)
                 {
                     runBA(imagePoints, cameraMatrix, rvecs_cam, tvecs_cam);
+                    //Bundle Adjustment优化
                 }
 
                 ROS_INFO("Saving camera calibration parameters using SetCameraInfo service");
@@ -428,6 +437,7 @@ private:
 
     void processTarget()
     {
+        ROS_INFO("starting to process the image...");
         vector<Point2f> pointBufL;
         bool found1 = false;
 
@@ -438,7 +448,7 @@ private:
         // Find corners
         if(c_.calibTarget == c_.opencvStr)
         {
-            ROS_INFO("Finding chessboard corners");
+            ROS_INFO("Finding chessboard corners...");
             found_chees = false;
             Mat leftOut = findCorners(inImL);
             found1 = found_chees;
@@ -451,7 +461,7 @@ private:
             }
         }
 
-        if(found1)
+        if(found1)//主要给rvecs_cam，tvecs_cam，rvecs_rb2gripper，tvecs_rb2gripper赋值
         {
             ROS_INFO("Saving images for camera calibration");
             // It saves the images on hardisk for debug purposes and
@@ -461,7 +471,7 @@ private:
                 saveImages("_L.tif", imLeft);
 
             ROS_INFO("Computing camera pose wrt the calibration target...");
-            c_.runExtrinsic(cameraMatrix, distCoeffs, pointBufL);
+            c_.runExtrinsic(cameraMatrix, distCoeffs, pointBufL);//标定板2相机
             rvecs_cam.push_back(c_.rvecEx.clone());
             tvecs_cam.push_back(c_.tvecEx.clone());
 
@@ -492,7 +502,7 @@ private:
 
             rvecs_rb2gripper.push_back(rTemp);
             tvecs_rb2gripper.push_back(transK);
-            // savePose(v.getX(), v.getY(), v.getZ(), q.getX(), q.getY(), q.getZ(), q.getW(), 0, 0, 0);
+            savePose(v.getX(), v.getY(), v.getZ(), q.getX(), q.getY(), q.getZ(), q.getW(), 0, 0, 0);
 
             ROS_INFO_STREAM("Number of images processed: " << c_.nrFrames);
             c_.nrFrames++;
@@ -501,7 +511,7 @@ private:
         }
         else
         {
-            ROS_INFO("Images were not good... capturing new ones!");
+            ROS_WARN("Images were not good... capturing new ones!");
         }
     }
 
@@ -514,6 +524,7 @@ private:
         line(dispImgL, Point(0, dispImgL.rows/2.0), Point(dispImgL.cols, dispImgL.rows/2.0), Scalar( 0, 255, 0), 5);
 
         cv::imshow(WINDOW_LEFT, dispImgL);
+        cv::waitKey(30);
     }
 
     Mat getCameraInfo(const sensor_msgs::CameraInfoConstPtr& msg)
