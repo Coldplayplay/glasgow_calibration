@@ -10,14 +10,14 @@
 	
 	<!-- Configuration file for camera calibration -->
     <param name="/glasgow_calibration/target" 	     value="opencv" />
-    <param name="/glasgow_calibration/marker_width"  value="0.023" />
-    <param name="/glasgow_calibration/marker_size_x" value="9" />
-    <param name="/glasgow_calibration/marker_size_y" value="6" />
+    <param name="/glasgow_calibration/marker_width"  value="0.03" />
+    <param name="/glasgow_calibration/marker_size_x" value="5" />
+    <param name="/glasgow_calibration/marker_size_y" value="7" />
     <param name="/glasgow_calibration/max_error"     value="2.0" />
     
     <!-- Where to save stuff -->
     <param name="/glasgow_calibration/outputImageDir" value="$(find calibration_glasgow)/calibrations/Images/" />
-    <param name="/glasgow_calibration/outputCalibDir" value="$(find calibration_glasgow)/calibrations/" />
+    <param name="/glasgow_calibration/outputCalibDir" value="$(find calibration_glasgow)/calibrations" />
     
     <!-- Saving? 0: Only calib stuff is saved, 1: save processed images in hard disk plus calib stuff, 2: Save everything-->
     <param name="/glasgow_calibration/save_mode" value="2" type="int"/>
@@ -45,7 +45,7 @@
 -->
 
 	<!-- Messages node -->
-	<arg name="robot_ip" default="192.168.1.113"/>
+	<arg name="robot_ip" default="192.168.1.123"/>
 	<include file="$(find kinect2_bridge)/launch/kinect2_bridge.launch">
     </include>
 	<include file="$(find ur_modern_driver)/launch/ur3_bringup.launch">

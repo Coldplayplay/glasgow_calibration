@@ -23,6 +23,7 @@ catkin_python_setup()
 
 add_service_files(
     FILES
+    TargetProcess.srv
     HandEyeCalibration.srv
 )
 
@@ -44,8 +45,10 @@ include_directories(${PCL_INCLUDE_DIRS})
 link_directories(${PCL_LIBRARY_DIRS})
 add_definitions(${PCL_DEFINITIONS})
 
-find_package(OpenCV)
-#set(OpenCV_DIR "/usr/local/opencv320/share/OpenCV/")
+#set(OpenCV_DIR /usr/local/opencv320/share/OpenCV)
+find_package(OpenCV REQUIRED)
+#include_directories(SYSTEM ${OpenCV_INCLUDE_DIRS} /usr/local/opencv320/include)
+#link_directories(${OpenCV_LIBRARY_DIRS} /usr/local/opencv320/lib)
 include_directories(${OpenCV_INCLUDE_DIRS})
 link_directories(${OpenCV_LIBRARY_DIRS})
 
@@ -67,12 +70,15 @@ target_link_libraries(calibration_services boost_signals)
 target_link_libraries(calibration_services ${OpenCV_LIBRARIES} ${cvsba_LIBS} ${Boost_LIBRARIES} ${PCL_LIBRARIES} ${catkin_LIBRARIES})
 add_dependencies(calibration_services ${PROJECT_NAME}_gencpp)
 
-add_executable(robot_trans_pub          src/robot_helper.cpp)
-target_link_libraries(robot_trans_pub   boost_signals)
-target_link_libraries(robot_trans_pub   ${OpenCV_LIBRARIES} ${cvsba_LIBS} ${Boost_LIBRARIES} ${PCL_LIBRARIES} ${catkin_LIBRARIES})
-add_dependencies(robot_trans_pub        ${PROJECT_NAME}_gencpp)
+add_executable(pub_robot_trans          src/robot_helper.cpp)
+target_link_libraries(pub_robot_trans   boost_signals)
+target_link_libraries(pub_robot_trans   ${OpenCV_LIBRARIES} ${cvsba_LIBS} ${Boost_LIBRARIES} ${PCL_LIBRARIES} ${catkin_LIBRARIES})
+add_dependencies(pub_robot_trans        ${PROJECT_NAME}_gencpp)
 
-
+add_executable(call_handeye_calib          src/handeye_calib_call.cpp)
+target_link_libraries(call_handeye_calib   boost_signals)
+target_link_libraries(call_handeye_calib   ${OpenCV_LIBRARIES} ${cvsba_LIBS} ${Boost_LIBRARIES} ${PCL_LIBRARIES} ${catkin_LIBRARIES})
+add_dependencies(call_handeye_calib        ${PROJECT_NAME}_gencpp)
 
 
 

@@ -150,15 +150,16 @@ bool Calibration::runCalibrationAndSave(Mat&  cameraMatrix, Mat& distCoeffs, vec
 bool Calibration::runExtrinsic(Mat cameraMatrix, Mat distCoeffs, vector<Point2f> imagePoints)
 {
     //cout << "Computing extrinsic geometry of the calibrated cameras" << endl;
+    bool result;
     vector<Point3f> objectPoints(1);
     calcBoardCornerPositions(objectPoints);
     objectPoints.resize(imagePoints.size(), objectPoints[0]);
     try
     {
         Mat inliers;
-        solvePnPRansac(objectPoints, imagePoints, cameraMatrix, distCoeffs, rvecEx, tvecEx, false, 100, 1.0, 50, inliers);
+        result = solvePnPRansac(objectPoints, imagePoints, cameraMatrix, distCoeffs, rvecEx, tvecEx, false, 100, 1.0, 0.99, inliers);
 
-        return true;
+        return result;
     }
     catch (exception& e)
     {
@@ -324,7 +325,7 @@ void Calibration::saveRobotPoses(string output_file, const vector<Mat>& in)
     }
     myfile.close();
     
-    ROS_ERROR_STREAM("File was saved in " << outputFile);
+    ROS_INFO_STREAM("File was saved in " << outputFile);
 }
 
 /* in_vec -> Transformation matrix */

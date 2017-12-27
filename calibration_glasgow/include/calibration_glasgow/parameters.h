@@ -38,6 +38,7 @@ static const char TRANFORM_SUB[] = "/transform_GrippertoBase";
 
 
 //Services
+static const char TGT_PROCESS[] = "/glasgow_calibration/ProcessTarget";
 static const char HE_CALIB[] = "/glasgow_calibration/HandEyeCalibration";
 
 #endif

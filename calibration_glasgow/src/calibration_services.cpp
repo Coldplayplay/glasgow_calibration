@@ -106,15 +106,15 @@ public:
         }
 
         c_.nrFrames = 1;
-/*
-        string cmd = "exec rm -r " + c_.calibOutputDir + "*.xml";
+
+        //string cmd = "exec rm -r " + c_.calibOutputDir + "*.xml";
+        //system(cmd.c_str());        
+        string cmd = "exec rm -rf " + c_.imageOutputDir;
         system(cmd.c_str());
-        cmd = "exec rm -r " + c_.imageOutputDir + "*.tif";
-        system(cmd.c_str());
-        cmd = "exec rm -r " + c_.calibOutputDir + "*.py";
-        system(cmd.c_str());
-*/
-        string cmd = "exec mkdir -p " + c_.imageOutputDir;
+        //cmd = "exec rm -r " + c_.calibOutputDir + "*.py";
+        //system(cmd.c_str());
+
+        cmd = "exec mkdir -p " + c_.imageOutputDir;
         system(cmd.c_str());
         // ***********************
 
@@ -130,7 +130,8 @@ public:
         cv::resizeWindow(WINDOW_LEFT, 640, 480);
         cvMoveWindow(WINDOW_LEFT, 10, 10);
 
-        // Service calls     提供服务？
+        //提供处理数据的服务和手眼标定的服务
+        process_target_srv_ = nh_.advertiseService(TGT_PROCESS, &CmainCalibration::TargetProcessSrv, this);
         he_calib_srv_ = nh_.advertiseService(HE_CALIB, &CmainCalibration::HandEyeCalibrationSrv, this);
 
         //capture_images();
@@ -139,8 +140,8 @@ public:
         ROS_INFO_STREAM("Node initialised...");
 
         sync.registerCallback(boost::bind(&CmainCalibration::mainRoutine, this, _1, _2, _3));
-        ROS_INFO_STREAM("================================================");
-        ROS_INFO_STREAM("waiting for image cam and robot messages...");
+        //ROS_INFO_STREAM("================================================");
+        //ROS_INFO_STREAM("waiting for image cam and robot messages...");
     }
 
     ~CmainCalibration()
@@ -176,18 +177,31 @@ public:
         tf::quaternionMsgToTF(msg_trans->transform.rotation, transform_rotation);
         tf::vector3MsgToTF(msg_trans->transform.translation, transform_translation);
 
+        ROS_INFO("It's OK to accept the targetProcess service call.");
         // Display images
         display_image(imLeft);
 
-        processTarget();
+        //processTarget();
         
         return;
 
     }
 
+    bool TargetProcessSrv(calibration_glasgow::TargetProcess::Request& req, calibration_glasgow::TargetProcess::Response& res)
+    {
+        ROS_INFO("====================================================================");
+        ROS_INFO("The process target service has been started...");
+        if(req.doIt==true)
+        {
+            processTarget();
+        }
+        res.status_message = "success";
+        return true;
+    }
+
     bool HandEyeCalibrationSrv(calibration_glasgow::HandEyeCalibration::Request& req, calibration_glasgow::HandEyeCalibration::Response& rsp)
     {
-        ROS_INFO_STREAM("=======================================================");
+        ROS_INFO_STREAM("==============================================================");
         ROS_INFO_STREAM("The hand-eye calibration service has been started...");
         int totalFrames = 8;
         if(req.doIt == true)
@@ -197,13 +211,13 @@ public:
             {
 
                 ROS_INFO_STREAM("Calibrating... Total number of good images: " << (int)imagePoints.size());
-
+/*
                 if(c_.calibTarget == c_.opencvStr)
                 {
                     runBA(imagePoints, cameraMatrix, rvecs_cam, tvecs_cam);
                     //Bundle Adjustment优化
                 }
-
+*/
                 ROS_INFO("Saving camera calibration parameters using SetCameraInfo service");
 
                 c_.saveRobotPoses("robot_poses.py", bigMatQ);
@@ -224,7 +238,7 @@ public:
                 ROS_INFO("Robot base to camera (left and right):");
                 printMatrix(rb2cam); // optical frame
 
-                // *******************
+                /*******************
                 tf::TransformListener listener;
                 tf::StampedTransform transform, transform2;
                     try{
@@ -266,47 +280,9 @@ public:
                 H_rgb2of.at<float>(2,3) = (float)transK.at<float>(2);
 
                 printMatrix(H_rgb2of);
+                */
 
-
-                //   try{
-                      
-                //       listener.waitForTransform("/camera_link", "/camera_rgb_frame", ros::Time(0), ros::Duration(3.0));
-                //       listener.lookupTransform("/camera_link", "/camera_rgb_frame", ros::Time(0), transform2);
-                //       //ROS_INFO("Successful.");
-                //     //  success = true;
-                //     }
-                //     catch (tf::TransformException &ex) {
-                //       ROS_ERROR("%s",ex.what());
-                //   }
-
-                // q = transform2.getRotation();
-                // v = transform2.getOrigin();
-
-                // ROS_INFO_STREAM(q);
-                // ROS_INFO_STREAM(v);
-
-                // R = getRotation(q.getX(), q.getY(), q.getZ(), q.getW());
-                // transK = Mat::zeros(3,1, CV_32F);
-                // transK.at<float>(0) = v.getX();
-                // transK.at<float>(1) = v.getY();
-                // transK.at<float>(2) = v.getZ();
-
-                // Mat H_cl2rgb = Mat::eye(4,4, CV_32F);
-                // H_cl2rgb.at<float>(0,0) = (float)R.at<float>(0,0);
-                // H_cl2rgb.at<float>(0,1) = (float)R.at<float>(0,1);
-                // H_cl2rgb.at<float>(0,2) = (float)R.at<float>(0,2);
-                // H_cl2rgb.at<float>(1,0) = (float)R.at<float>(1,0);
-                // H_cl2rgb.at<float>(1,1) = (float)R.at<float>(1,1);
-                // H_cl2rgb.at<float>(1,2) = (float)R.at<float>(1,2);
-                // H_cl2rgb.at<float>(2,0) = (float)R.at<float>(2,0);
-                // H_cl2rgb.at<float>(2,1) = (float)R.at<float>(2,1);
-                // H_cl2rgb.at<float>(2,2) = (float)R.at<float>(2,2);
-
-                // H_cl2rgb.at<float>(0,3) = (float)transK.at<float>(0);
-                // H_cl2rgb.at<float>(1,3) = (float)transK.at<float>(1);
-                // H_cl2rgb.at<float>(2,3) = (float)transK.at<float>(2);
-
-                //printMatrix(H_cl2rgb);
+                
       //ros::Duration(1.0).sleep();
    //   succe
                 // 1. rgb 2 optical frame
@@ -314,7 +290,7 @@ public:
                 // get torso 2 camera link
                 // *******************
 
-                //888888888888888888888888888888888888888888888888888888888888
+                /*****************************
                // Mat rb2cl = rb2cam * H_rgb2of.inv() * H_cl2rgb.inv();
                 Mat rb2cl = rb2cam * H_rgb2of.inv();
 
@@ -338,7 +314,7 @@ public:
                 Vec3f rpy = rotationMatrixToEulerAngles(rot_rb2cl);
                 ROS_INFO_STREAM(rpy);
                 ROS_INFO_STREAM(rb2cl.at<float>(0,3) << " " << rb2cl.at<float>(1,3) << " " << rb2cl.at<float>(2,3) << " " <<rpy.val[2] << " " << rpy.val[1] << " " << rpy.val[0]);
-
+                **********/
                 
                 // Save stuff
                 if(c_.save_mode >= all)
@@ -347,7 +323,7 @@ public:
                     c_.saveTransformations("cam_to_target.xml", "cam2target", rvecs_cam, tvecs_cam);
                 }
                 c_.saveHandEyeTransform("gripper2target.xml", robotMat, "gripperHtarget");
-                saveCalibration(rb2cam.inv(), "camera"); //OK!
+                saveCalibration(rb2cam.inv(), "camera2rb"); //OK!
 
                 // *****************
 
@@ -442,13 +418,11 @@ private:
         bool found1 = false;
 
         Mat inImL;
-        // imLeft, cloud_pcl
         imLeft.copyTo(inImL);
 
         // Find corners
         if(c_.calibTarget == c_.opencvStr)
         {
-            ROS_INFO("Finding chessboard corners...");
             found_chees = false;
             Mat leftOut = findCorners(inImL);
             found1 = found_chees;
@@ -558,7 +532,7 @@ private:
         std::remove((calFile).c_str());
         std::ofstream file;
         file.open((calFile).c_str(), ios::app);
-        file << "2" << endl;
+        //file << "2" << endl;
 
         file << child_frame.c_str() << endl << endl;
 
@@ -680,7 +654,7 @@ private:
         }
         else
             view_scaled = view;
-
+        
         pointBuf.resize(0);
         found_chees = findChessboardCorners( view_scaled, c_.boardSize, pointBuf,
                                              CV_CALIB_CB_ADAPTIVE_THRESH | CV_CALIB_CB_NORMALIZE_IMAGE);
