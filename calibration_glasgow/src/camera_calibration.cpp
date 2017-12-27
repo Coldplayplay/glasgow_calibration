@@ -307,7 +307,7 @@ void Calibration::saveTransformations(string output_file, string labelX2Y,
 
 void Calibration::saveRobotPoses(string output_file, const vector<Mat>& in)
 {
-    string outputFile = calibOutputDir + "/" + output_file;
+    string outputFile = calibOutputDir + output_file;
 
     std::ofstream myfile;
     myfile.open (outputFile.c_str(), std::ios::app);
@@ -539,7 +539,7 @@ void Calibration::saveStereoParams(string outputFile, Mat &cameraMatrix1, Mat& d
                                    Mat& distCoeffs2, Mat& R, Mat& T, Mat& E, Mat& F, double totalAvgErr)
 {
 
-    outputFile = calibOutputDir + "/" + outputFile;
+    outputFile = calibOutputDir + outputFile;
     ROS_INFO_STREAM("Saving stereo parameters at: " << outputFile);
     FileStorage fs(outputFile, FileStorage::WRITE );
 
@@ -573,7 +573,7 @@ void Calibration::saveCameraParams(std::string outputFile, cv::Mat &cameraMatrix
                                    const vector<float> &reprojErrs, const vector<vector<cv::Point2f> > &imagePoints,
                                    double totalAvgErr)
 {
-    outputFile = calibOutputDir + "/" + outputFile;
+    outputFile = calibOutputDir + outputFile;
 
     FileStorage fs(outputFile, FileStorage::WRITE );
 
