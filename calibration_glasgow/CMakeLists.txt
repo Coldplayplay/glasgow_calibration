@@ -80,5 +80,9 @@ target_link_libraries(call_handeye_calib   boost_signals)
 target_link_libraries(call_handeye_calib   ${OpenCV_LIBRARIES} ${cvsba_LIBS} ${Boost_LIBRARIES} ${PCL_LIBRARIES} ${catkin_LIBRARIES})
 add_dependencies(call_handeye_calib        ${PROJECT_NAME}_gencpp)
 
+add_executable(getpose          src/getPose.cpp)
+target_link_libraries(getpose   boost_signals)
+target_link_libraries(getpose   ${OpenCV_LIBRARIES} ${cvsba_LIBS} ${Boost_LIBRARIES} ${PCL_LIBRARIES} ${catkin_LIBRARIES})
+add_dependencies(getpose        ${PROJECT_NAME}_gencpp)
 
 

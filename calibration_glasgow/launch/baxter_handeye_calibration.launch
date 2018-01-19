@@ -44,13 +44,35 @@
 	</include>
 -->
 
-	<!-- Messages node -->
-	<arg name="robot_ip" default="192.168.1.123"/>
+	<!-- ur3 model and kinect2 model-->	
+	<include file="$(find iai_kinect2_description)/launch/kinect2_ur3_upload.launch">		
+    </include>
+	
+	<!-- real devices -->
+	<arg name="publish_tf"   default="true"/>
+	<!-- robot_ip: IP-address of the robot's socket-messaging server -->
+	<arg name="robot_ip" 	 default="192.168.1.123"/>
+	<arg name="min_payload"  default="0.0"/>
+    <arg name="max_payload"  default="3.0"/>
+  	<arg name="prefix" 		 default="" />
+	<!--arg name="tool_frame" default="$(arg prefix)tool0_controller" /-->
+
 	<include file="$(find kinect2_bridge)/launch/kinect2_bridge.launch">
+		<arg name="publish_tf" value="$(arg publish_tf)"/>
     </include>
-	<include file="$(find ur_modern_driver)/launch/ur3_bringup.launch">
+
+	<!-- ur common -->
+	<include file="$(find ur_modern_driver)/launch/ur_common.launch">
 		<arg name="robot_ip" value="$(arg robot_ip)"/>
-    </include>
+		<arg name="min_payload"  value="$(arg min_payload)"/>
+		<arg name="max_payload"  value="$(arg max_payload)"/>
+		<arg name="prefix" value="$(arg prefix)" />
+		<!--arg name="tool_frame" default="$(arg tool_frame)" /-->
+	</include>	
+	
+	<node name="rviz" pkg="rviz" type="rviz" />
+
+
 	<!-- 
 	<node pkg="calibration_glasgow" type="robot_trans_pub" name="robot_helper" output="screen">
 	</node>

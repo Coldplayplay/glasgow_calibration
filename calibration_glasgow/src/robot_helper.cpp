@@ -76,6 +76,7 @@ int main(int argc,char** argv)
     std::string tool_link_ = joint_prefix + "tool0_controller";
 
     vector<string> cmd_str;
+    /*
     cmd_str.push_back("movej([1.57075, -1.396, -1.57075, 0.349, 1.396, 0.2094],1.4,1.05,5)\n");
     cmd_str.push_back("movej([1.57075, -1.396, -1.47075, 0.549, 1.196, 0.3094],1.4,1.05,5)\n");
     cmd_str.push_back("movej([1.57075, -1.396, -1.37075, 0.749, 1.096, 0.4094],1.4,1.05,5)\n");
@@ -87,7 +88,21 @@ int main(int argc,char** argv)
     cmd_str.push_back("movej([2.07075, -1.096, -1.77075, 1.349, 0.596, 0.5594],1.4,1.05,5)\n");
     cmd_str.push_back("movej([1.57075, -1.396, -1.97075, 1.349, 1.896, 0.2394],1.4,1.05,5)\n");
     cmd_str.push_back("movej([1.57075, -1.396, -1.97075, 1.349, 1.696, 0.1394],1.4,1.05,5)\n");
+*/
+     //cmd_str.push_back("movej([0, -1.57075, 0, -1.57075, 0, 6.2831852],1.4,1.05,5)\n");
+    cmd_str.push_back("movej([1.57271618897209,	-1.40952790391062,	-1.57428698529889,	0.227416401534861,	1.70064882314327,	6.139451807234347],1.4,1.05,5)\n");
+    cmd_str.push_back("movej([1.55526289645215,	-1.33866753627965,	-1.55665915985374,	-0.152716309549504,	1.64410015537866,	6.16624824729597],1.4,1.05,5)\n");
+    cmd_str.push_back("movej([1.40532438142728,	-1.52384696991625,	-1.36397481043357,	-0.266511776779534,	1.45967041641778,	6.05349997761713],1.4,1.05,5)\n");
+    cmd_str.push_back("movej([1.9515,   -1.0125,   -1.8513,   -0.1229,    1.6139,    0.0290],1.4,1.05,5)\n");     
+    cmd_str.push_back("movej([1.9515,   -0.9037,   -1.6963,   -0.1229,    1.4258,    0.0290],1.4,1.05,5)\n");
 
+    cmd_str.push_back("movej([1.54304559168819,	-1.12922802604033,	-2.08392312688123,	0.530754625531476,	1.75457949702990,	6.26712827806124],1.4,1.05,5)\n");
+    cmd_str.push_back("movej([1.54269652583779,	-1.11299646399678,	-1.88844625065786,	-0.110828407501640,	1.62245807265393,	6.26712827806124],1.4,1.05,5)\n");
+    cmd_str.push_back("movej([1.68895511715491,	-1.06796696929533,	-1.96925499502520,	0.122871179340401,	1.23953283476637,	0.425162205785819],1.4,1.05,5)\n");
+    cmd_str.push_back("movej([1.57707951210208,	-1.14999744413906,	-1.95441969638325,	0.267384441405531,	1.46171324854525,	0.559727091114582],1.4,1.05,5)\n");
+    cmd_str.push_back("movej([1.58249003278326,	-1.00426245159754,	-1.88321026290188,	-0.351509311351658,	1.44687794990330,	0.522551578047102],1.4,1.05,5)\n");
+
+    cmd_str.push_back("movej([1.53536614297941,	-1.03655104275943,	-1.89001704698466,	-0.267035375555132,	1.54409278923938,	0.360410490536829],1.4,1.05,5)\n");
     
 
     double minX = -0.25 ;
@@ -136,10 +151,15 @@ int main(int argc,char** argv)
         {
             try 
             {
-                listener.waitForTransform(tool_link_, base_link_, ros::Time(0), ros::Duration(1) );//第二个参数到第一个参数的变换T
-                listener.lookupTransform(tool_link_, base_link_, ros::Time(0), transform);
+                listener.waitForTransform(base_link_, tool_link_, ros::Time(0), ros::Duration(1) );//第二个参数到第一个参数的变换T
+                listener.lookupTransform(base_link_, tool_link_, ros::Time(0), transform);
                 tf::transformStampedTFToMsg(transform, msg_trans);
                 trans_pub.publish(msg_trans);
+                tf::Quaternion a = transform.getRotation();
+                tf::Vector3 b = transform.getOrigin();
+                ROS_INFO_STREAM("tool02base:transition "<<b[0]<<" "<<b[1]<<" "<<b[2]);
+                ROS_INFO_STREAM("tool02base:rotation "<<a[0]<<" "<<a[1]<<" "<<a[2]<<" "<<a[3]);
+                std::cout<<std::endl;
                 //ROS_INFO_STREAM("succeeded in publishing joint_states: num "<<5-num_ensured);
             } 
             catch (tf::TransformException ex) 
@@ -149,6 +169,7 @@ int main(int argc,char** argv)
             
         } 
         ROS_INFO_STREAM("succeeded in publishing joint_states: "<<num_ensured2<<" times");
+        //ROS_INFO_STREAM("transform is:"<<transform);
        
         sleep(1);//给mainRoutine接收消息的等待时间    
         while(!targetProcess_client.call(srv1));
@@ -175,6 +196,9 @@ ros::Time::now()
 tf::TransformStampedTFToMsg(transform, msg_trans);
 StampedTransform (const tf::Transform &input, const ros::Time &timestamp,
                    const std::string &frame_id, const std::string &child_frame_id)
+表示child_frame_id在frame_id下的位姿
+
 lookupTransform (const std::string &target_frame, const std::string &source_frame, const ros::Time &time, StampedTransform &transform) const
  	Get the transform between two frames by frame ID. 
- */
+表示source_frame相对于target_frame的位置和姿态
+*/

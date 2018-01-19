@@ -43,6 +43,7 @@
 namespace enc = sensor_msgs::image_encodings;
 using namespace cv;
 using namespace std;
+using namespace Eigen;
 #define DEBUG true
 
 

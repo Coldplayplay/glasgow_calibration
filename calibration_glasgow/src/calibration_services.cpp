@@ -48,7 +48,7 @@ public:
 
     bool debugQ;
     int noImgPtu;
-    vector<Mat> bigMatQ, bigMatE;
+    vector<Mat> bigMatQ, bigMatE;    
 
 //====================================三个订阅器和同步器的初始化：1.图片，2.相机参数，3.机械臂手爪到底座的变换矩阵
     CmainCalibration() : it_(nh_),
@@ -132,7 +132,7 @@ public:
 
         //提供处理数据的服务和手眼标定的服务
         process_target_srv_ = nh_.advertiseService(TGT_PROCESS, &CmainCalibration::TargetProcessSrv, this);
-        he_calib_srv_ = nh_.advertiseService(HE_CALIB, &CmainCalibration::HandEyeCalibrationSrv, this);
+        he_calib_srv_ = nh_.advertiseService(HE_CALIB, &CmainCalibration::HandEyeCalibrationSrv1, this);
 
         //capture_images();
         cv::startWindowThread();
@@ -199,6 +199,72 @@ public:
         return true;
     }
 
+    bool HandEyeCalibrationSrv1(calibration_glasgow::HandEyeCalibration::Request& req, calibration_glasgow::HandEyeCalibration::Response& rsp)
+    {
+        ROS_INFO_STREAM("==============================================================");
+        ROS_INFO_STREAM("The hand-eye calibration service (modified version) has been started...");
+        int totalFrames = 8;
+        if(req.doIt == true)
+        {
+            // At least totalFrames images have to be captured
+            if( (int)imagePoints.size() > totalFrames-1)
+            {
+
+                ROS_INFO_STREAM("Calibrating... Total number of good images: " << (int)imagePoints.size());
+/*
+                if(c_.calibTarget == c_.opencvStr)
+                {
+                    runBA(imagePoints, cameraMatrix, rvecs_cam, tvecs_cam);
+                    //Bundle Adjustment优化
+                }
+*/
+                ROS_INFO("Saving camera calibration parameters using SetCameraInfo service");
+
+                c_.saveRobotPoses("robot_poses.py", bigMatQ);
+
+                /*********************prepare data*****************************/
+                if(!(hE_camera.loadParameters(rvecs_rb2gripper, tvecs_rb2gripper, rvecs_cam, tvecs_cam, false)))
+                    ROS_FATAL("Wrong size in rotation and translation vectors for hand eye calibration");
+                hE_camera.vector_Mat2Affine3d();
+
+                /****************Perform calibration!**************************/
+                ROS_INFO("Calibration from (left) camera to robot base: ");
+                if(!(hE_camera.solveHandEyeFixed(hE_camera.gripper2base, hE_camera.calib2cam, Chandeye::HandEyeMethod::Tsai, false, hE_camera.sensor_to_base)))
+                    ROS_FATAL("failure in hand eye calibration.");
+                
+                ROS_INFO("Robot base to camera (left and right):");                
+                printAffine3d(hE_camera.sensor_to_base);                    
+                
+                /*********************Save stuff*******************************/
+                if(c_.save_mode >= all)
+                {
+                    c_.saveTransformations("robotBase_to_gripper_.xml", "base2target", rvecs_rb2gripper, tvecs_rb2gripper);
+                    c_.saveTransformations("cam_to_target.xml", "cam2target", rvecs_cam, tvecs_cam);
+                }                
+                saveCalibration1(hE_camera.sensor_to_base, "camera2rb"); //OK!
+                
+                //imagePoints.resize(0);
+                ROS_INFO("Calibration done!");
+                rsp.status_message = "calibrated!";
+                rsp.success = true;
+            }
+            else
+            {
+                ROS_INFO("At least %i images must be captured", totalFrames);
+                rsp.status_message = "calibration failed!!";
+                rsp.success = false;
+                return false;
+            }
+        }
+        else
+        {
+            rsp.status_message = "Nothing to do";
+            rsp.success = true;
+        }
+
+        return true;
+    }
+    
     bool HandEyeCalibrationSrv(calibration_glasgow::HandEyeCalibration::Request& req, calibration_glasgow::HandEyeCalibration::Response& rsp)
     {
         ROS_INFO_STREAM("==============================================================");
@@ -450,8 +516,8 @@ private:
             tvecs_cam.push_back(c_.tvecEx.clone());
 
             // Two transformation required:
-            //      1. Robot base to robot gripper
-            ROS_INFO_STREAM("Transform from: " << ROBOT_BASE << " to " << ROBOT_GRIPPER);
+            //      1. robot gripper to Robot base
+            ROS_INFO_STREAM("Transform from: " << ROBOT_GRIPPER << " to " << ROBOT_BASE );
 
             tf::Quaternion q = transform_rotation;
             tf::Vector3 v = transform_translation;
@@ -469,7 +535,7 @@ private:
             transK.at<float>(2) = v.getZ();
 
             Mat rTemp;
-            Rodrigues(rotK, rTemp);
+            Rodrigues(rotK, rTemp);//矩阵2向量
 
             printMatrix(rTemp);
             printMatrix(transK);
@@ -534,12 +600,38 @@ private:
         file.open((calFile).c_str(), ios::app);
         //file << "2" << endl;
 
-        file << child_frame.c_str() << endl << endl;
+        //file << child_frame.c_str() << endl << endl;
 
         for (int i=0; i<cal.rows; i++)
         {
             for (int j=0; j<cal.cols; j++)
                 file << cal.at<float>(i,j) << "  ";
+
+            file << endl;
+        }
+
+        file.close();
+        //ROS_INFO("Calibration saved to %s: ",calFile.c_str());
+    }
+
+    void saveCalibration1(Eigen::Affine3d cal, string child_frame)
+    {
+        string calFile;
+
+        calFile = ros::package::getPath("calibration_glasgow") + "/" + child_frame + ".calib";
+        ROS_WARN("Calibration saved to %s: ",calFile.c_str());
+
+        std::remove((calFile).c_str());
+        std::ofstream file;
+        file.open((calFile).c_str(), ios::app);
+        //file << "2" << endl;
+
+        //file << child_frame.c_str() << endl << endl;
+
+        for (int i=0; i<4; i++)
+        {
+            for (int j=0; j<4; j++)
+                file << cal(i,j) << "  ";
 
             file << endl;
         }
@@ -619,7 +711,14 @@ private:
 
 
     }
-
+    void printAffine3d(Eigen::Affine3d A)
+    {
+        for(int i=0; i<4; i++)
+            for(int j=0; j<4; j++)
+                std::cout<<A(i,j);
+            std::cout<<endl;
+        std::cout<<endl;
+    }
     void printMatrix(Mat M, bool printType = true)
     {
         if(printType)
