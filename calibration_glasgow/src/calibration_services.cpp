@@ -12,6 +12,7 @@
 #include <calibration_glasgow/handeye_calibration.h>
 #include <tf/tf.h>
 #include <tf/transform_listener.h>
+#include <ctime>
 
 enum SaveOp {nothing, images, all};
 
@@ -176,13 +177,12 @@ public:
         GRIPPER_LINK = msg_trans->child_frame_id;
         tf::quaternionMsgToTF(msg_trans->transform.rotation, transform_rotation);
         tf::vector3MsgToTF(msg_trans->transform.translation, transform_translation);
-
-        ROS_INFO("It's OK to accept the targetProcess service call.");
+        
         // Display images
         display_image(imLeft);
-
+        //sleep(0.5);
         //processTarget();
-        
+        ROS_INFO("It's OK to accept the targetProcess service call.");
         return;
 
     }
@@ -495,7 +495,7 @@ private:
             pointBufL = pointBuf;
             
             display_image(leftOut);
-
+            cv::waitKey(100);
             if(found1){
                 imagePoints.push_back(pointBufL);
             }
@@ -560,8 +560,8 @@ private:
         Mat dispImgL;
         inImg.copyTo(dispImgL);
         
-        line(dispImgL, Point(dispImgL.cols/2.0, 0), Point(dispImgL.cols/2.0, dispImgL.rows), Scalar( 0, 255, 0), 5);
-        line(dispImgL, Point(0, dispImgL.rows/2.0), Point(dispImgL.cols, dispImgL.rows/2.0), Scalar( 0, 255, 0), 5);
+        //line(dispImgL, Point(dispImgL.cols/2.0, 0), Point(dispImgL.cols/2.0, dispImgL.rows), Scalar( 0, 255, 0), 5);
+        //line(dispImgL, Point(0, dispImgL.rows/2.0), Point(dispImgL.cols, dispImgL.rows/2.0), Scalar( 0, 255, 0), 5);
 
         cv::imshow(WINDOW_LEFT, dispImgL);
         cv::waitKey(30);

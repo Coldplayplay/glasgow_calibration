@@ -10,9 +10,15 @@
 	
 	<!-- Configuration file for camera calibration -->
     <param name="/glasgow_calibration/target" 	     value="opencv" />
-    <param name="/glasgow_calibration/marker_width"  value="0.03" />
+    
+    <!--param name="/glasgow_calibration/marker_width"  value="0.03" />
     <param name="/glasgow_calibration/marker_size_x" value="5" />
-    <param name="/glasgow_calibration/marker_size_y" value="7" />
+    <param name="/glasgow_calibration/marker_size_y" value="7" /-->
+
+	<param name="/glasgow_calibration/marker_width"  value="0.025" />
+    <param name="/glasgow_calibration/marker_size_x" value="8" />
+    <param name="/glasgow_calibration/marker_size_y" value="9" />
+
     <param name="/glasgow_calibration/max_error"     value="2.0" />
     
     <!-- Where to save stuff -->
@@ -51,10 +57,11 @@
 	<!-- real devices -->
 	<arg name="publish_tf"   default="true"/>
 	<!-- robot_ip: IP-address of the robot's socket-messaging server -->
-	<arg name="robot_ip" 	 default="192.168.1.123"/>
+	<arg name="robot_ip" 	 default="192.168.1.114"/>
 	<arg name="min_payload"  default="0.0"/>
     <arg name="max_payload"  default="3.0"/>
-  	<arg name="prefix" 		 default="" />
+  	<arg name="prefix"       default="" />
+  	<arg name="limited"	 default="true"/>
 	<!--arg name="tool_frame" default="$(arg prefix)tool0_controller" /-->
 
 	<include file="$(find kinect2_bridge)/launch/kinect2_bridge.launch">
@@ -69,6 +76,11 @@
 		<arg name="prefix" value="$(arg prefix)" />
 		<!--arg name="tool_frame" default="$(arg tool_frame)" /-->
 	</include>	
+	
+	<include file="$(find ur5_moveit_config)/launch/ur5_moveit_planning_execution.launch">
+	  	<arg name="limited" value="$(arg limited)"/>
+	</include>
+	
 	
 	<node name="rviz" pkg="rviz" type="rviz" />
 
