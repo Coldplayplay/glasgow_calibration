@@ -85,4 +85,9 @@ target_link_libraries(getpose   boost_signals)
 target_link_libraries(getpose   ${OpenCV_LIBRARIES} ${cvsba_LIBS} ${Boost_LIBRARIES} ${PCL_LIBRARIES} ${catkin_LIBRARIES})
 add_dependencies(getpose        ${PROJECT_NAME}_gencpp)
 
+add_executable(record          src/record_joint.cpp)
+target_link_libraries(record   boost_signals)
+target_link_libraries(record   ${OpenCV_LIBRARIES} ${cvsba_LIBS} ${Boost_LIBRARIES} ${PCL_LIBRARIES} ${catkin_LIBRARIES})
+add_dependencies(record        ${PROJECT_NAME}_gencpp)
+
 
